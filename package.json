@@ -1,6 +1,6 @@
 {
   "name": "wotnectivity-knx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "KNX implementation of wotnectivity library",
   "main": "src/index.js",
   "scripts": {
@@ -19,6 +19,7 @@
   ],
   "author": "Manel Mena",
   "license": "MIT",
+  "homepage": "https://github.com/manelme/wotnectivity-knx",
   "dependencies": {
     "knx": "^2.3.7",
     "rxjs": "^6.6.0"
