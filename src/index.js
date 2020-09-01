@@ -5,7 +5,20 @@ async function sendRequest(address, configuration, payload) {
   try {
     var connection;
     if (address) {
-      if (configuration.requestType == "read") {
+      if (!configuration|| configuration.requestType == "subscribe") {
+        return new Promise((resolve) => {
+          connection = knx.Connection({
+            ipAddr: address,
+            handlers: {
+              connected: () => {
+                resolve(subscribeRequest(connection, configuration));
+              },
+          }
+          })
+          
+        })
+      }
+      else if (configuration.requestType == "read") {
         return new Promise((resolve, reject) => {
           connection = knx.Connection({
             ipAddr: address,
@@ -37,18 +50,6 @@ async function sendRequest(address, configuration, payload) {
                   reject(error)
                   connection.Disconnect()
                 })
-              }
-            }
-          })
-        })
-      }
-      else if (configuration.requestType == "subscribe") {
-        return new Promise((resolve) => {
-          connection = knx.Connection({
-            ipAddr: address,
-            handlers: {
-              connected: () => {
-                resolve(subscribeRequest(connection, configuration));
               }
             }
           })
@@ -97,16 +98,39 @@ async function writeRequest(connection, configuration, payload) {
 function subscribeRequest(connection, configuration) {
   return rxjs.Observable.create((data) => {
     try {
-      var dp = new knx.Datapoint({
-        ga: configuration.group,
-        dpt: configuration.dataType
-      }, connection)
-      dp.on('change', (oldValue, newValue) => {
-        data.next(newValue);
+      if(!configuration){
+        connection.on("event", function(evt, src, dest, value) { console.log(
+          "event: %s, src: %j, dest: %j, value: %j",
+          evt, src, dest, value
+        ); 
       })
+      }
+      else if(configuration.group){
+        var dp = new knx.Datapoint({
+          ga: configuration.group,
+          dpt: configuration.dataType
+        }, connection)
+        dp.on('change', (oldValue, newValue) => {
+          data.next(newValue);
+        })
+      }else if(configuration.groups){
+        configuration.groups.forEach(element => {
+          var dp = new knx.Datapoint({
+            ga: element.group,
+            dpt: element.dataType
+          }, connection)
+          dp.on('change', (oldValue, newValue) => {
+            data.next({group:element.group, dataType: element.dataType, value:newValue});
+          })
+        });
+        
+        
+      }
     } catch (error) {
       console.log(error)
     }
+    
+    
   })
 
 }
