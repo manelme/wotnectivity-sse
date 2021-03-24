@@ -23,5 +23,13 @@
   "homepage": "https://github.com/manelme/wotnectivity-sse",
   "dependencies": {
     "rxjs": "^6.6.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manelme/wotnectivity-sse.git"
+  },
+  "bugs": {
+    "url": "https://github.com/manelme/wotnectivity-sse/issues"
   }
 }

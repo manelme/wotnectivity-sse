@@ -21,15 +21,6 @@ catch (error) {
 }
 }
 
-async function init() {
-  let response = await sendRequest("http://192.168.1.21/property/status/sse", {
-    requestType: "SSE"
-  })
-  response.subscribe((data)=>{
-    console.log(data)
-  })
-}
-
 function subscribeRequest(address, configuration) {
   return rxjs.Observable.create((data) => {
     try {
@@ -81,7 +72,5 @@ function subscribeRequest(address, configuration) {
   })
 
 }
-
-init()
 
 module.exports.sendRequest = sendRequest
