@@ -1,131 +1,78 @@
-var knx = require('knx');
+const http = require('http');
+const https = require('https');
 var rxjs = require('rxjs');
+
 
 async function sendRequest(address, configuration, payload) {
   try {
-    var connection;
     if (address) {
-      if (!configuration|| configuration.requestType == "subscribe") {
-        return new Promise((resolve) => {
-          connection = knx.Connection({
-            ipAddr: address,
-            handlers: {
-              connected: () => {
-                resolve(subscribeRequest(connection, configuration));
-              },
-          }
-          })
-          
-        })
-      }
-      else if (configuration.requestType == "read") {
+      if (!configuration || configuration.requestType == "SSE") {
         return new Promise((resolve, reject) => {
-          connection = knx.Connection({
-            ipAddr: address,
-            handlers: {
-              connected: () => {
-                readRequest(connection, configuration).then(data => {
-                  resolve(data)
-                  connection.Disconnect()
-                }).catch((error) => {
-                  reject(error)
-                  connection.Disconnect()
-                })
-              }
-            }
-          })
-        })
-
-      }
-      else if (configuration.requestType == "write") {
-        return new Promise((resolve, reject) => {
-          connection = knx.Connection({
-            ipAddr: address,
-            handlers: {
-              connected: () => {
-                writeRequest(connection, configuration, payload).then(data => {
-                  resolve(data)
-                  connection.Disconnect()
-                }).catch((error) => {
-                  reject(error)
-                  connection.Disconnect()
-                })
-              }
-            }
-          })
+          resolve(subscribeRequest(address, configuration))
+        }).catch((error) => {
+          console.log(error);
+          reject(error);
         })
       }
     }
-  } catch (error) {
-    console.log(error);
-  }
-
+} 
+catch (error) {
+  console.log(error);
+}
 }
 
-async function readRequest(connection, configuration) {
-  return new Promise((resolve, reject) => {
-    try {
-      var dp = new knx.Datapoint({
-        ga: configuration.group,
-        dpt: configuration.dataType
-      }, connection);
-      dp.read((src, value) => {
-        resolve(value);
-      });
-    } catch (error) {
-      reject(error);
-    }
+async function init() {
+  let response = await sendRequest("http://192.168.1.21/property/status/sse", {
+    requestType: "SSE"
+  })
+  response.subscribe((data)=>{
+    console.log(data)
   })
 }
 
-async function writeRequest(connection, configuration, payload) {
-  return new Promise((resolve, reject) => {
-    try {
-      var dp = new knx.Datapoint({
-        ga: configuration.group,
-        dpt: configuration.dataType
-      }, connection);
-      dp.write(payload);
-      dp.read((src, value) => {
-        resolve(value)
-      })
-    } catch (error) {
-      reject(error);
-    }
-  })
-}
-
-function subscribeRequest(connection, configuration) {
+function subscribeRequest(address, configuration) {
   return rxjs.Observable.create((data) => {
     try {
-      if(!configuration){
-        connection.on("event", function(evt, src, dest, value) { console.log(
-          "event: %s, src: %j, dest: %j, value: %j",
-          evt, src, dest, value
-        ); 
-      })
-      }
-      else if(configuration.group){
-        var dp = new knx.Datapoint({
-          ga: configuration.group,
-          dpt: configuration.dataType
-        }, connection)
-        dp.on('change', (oldValue, newValue) => {
-          data.next(newValue);
+      if(address.substring(0,5)=="https"){
+        https.get(address, configuration.headers, (resp) => {
+          let data2 = '';
+          // A chunk of data has been received.
+          resp.on('data', (chunk) => {
+            data2 += chunk.toString();
+            if (data2.includes("\n")){
+              data.next(data2.split("\n")[0])
+              data2 = "";
+            }
+          });
+  
+          // The whole response has been received. Print out the result.
+          resp.on('end', () => {
+            
+          });
+  
         })
-      }else if(configuration.groups){
-        configuration.groups.forEach(element => {
-          var dp = new knx.Datapoint({
-            ga: element.group,
-            dpt: element.dataType
-          }, connection)
-          dp.on('change', (oldValue, newValue) => {
-            data.next({group:element.group, dataType: element.dataType, value:newValue});
-          })
-        });
-        
-        
+      }else{
+        http.get(address, configuration.headers, (resp) => {
+          let data2 = '';
+          // A chunk of data has been received.
+          resp.on('data', (chunk) => {
+            data2 += chunk.toString();
+            if (data2.includes("\n")){
+              data.next(data2.split("\n")[0])
+              data2 = "";
+            }
+          });
+  
+          // The whole response has been received. Print out the result.
+          resp.on('end', () => {
+            
+          });
+  
+        })
       }
+      
+        
+      
     } catch (error) {
       console.log(error)
     }
@@ -134,5 +81,7 @@ function subscribeRequest(connection, configuration) {
   })
 
 }
+
+init()
 
 module.exports.sendRequest = sendRequest

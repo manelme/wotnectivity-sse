@@ -1,14 +1,15 @@
 {
-  "name": "wotnectivity-knx",
-  "version": "1.0.2",
-  "description": "KNX implementation of wotnectivity library",
+  "name": "wotnectivity-sse",
+  "version": "1.0.0",
+  "description": "Library that works with text/events streams delimited with new lines and ndjson",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.js"
   },
   "keywords": [
-    "KNX",
+    "SSE",
+    "ndjson",
     "WoT",
     "library",
     "Web",
@@ -19,9 +20,8 @@
   ],
   "author": "Manel Mena",
   "license": "MIT",
-  "homepage": "https://github.com/manelme/wotnectivity-knx",
+  "homepage": "https://github.com/manelme/wotnectivity-sse",
   "dependencies": {
-    "knx": "^2.3.7",
     "rxjs": "^6.6.0"
   }
 }
